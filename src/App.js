@@ -1,6 +1,9 @@
 import React from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { MeshWobbleMaterial, OrbitControls, useHelper } from "@react-three/drei";
 import { useRef, useState } from "react";
+import { DirectionalLightHelper } from "three";
+import { useControls } from "leva";
 import './App.css';
 
 
@@ -65,27 +68,59 @@ const Cube = ({ position, size, color }) => {
   );
 }
 
-const TorusKnot = ({ position, size, color }) => {
+const TorusKnot = ({ position, size }) => {
   const ref = useRef();
+
+  const {color , radius} = useControls({
+    color: "lightblue",
+    radius: {
+      value: 5,
+      min: 1,
+      max: 10,
+      step: 0.5,
+    },
+  })
   
   useFrame((state, delta) => {
-    ref.current.rotation.x += delta
-    ref.current.rotation.y += delta * 2.0 
-    ref.current.position.z = Math.sin(state.clock.elapsedTime) * 2
+    {/*ref.current.rotation.x += delta*/}
+    {/*ref.current.rotation.y += delta * 2.0*/}
+  {/*ref.current.position.z = Math.sin(state.clock.elapsedTime) * 1.5*/}
   });
   
   return (
     <mesh position={position} ref={ref}>
-      <torusKnotGeometry args={size} />
-      <meshStandardMaterial color={color} />
+      <torusKnotGeometry args={[radius, ...size]} />
+      {/*<meshStandardMaterial color={color} />*/}
+      <MeshWobbleMaterial color={color} factor={10} speed={0.2} />
+
     </mesh>
   );
 }
 
-function App() {
+const Scene = () => {
+  const directionalLightRef = useRef();
+
+  const {lightColor, lightIntensity} = useControls({
+    lightColor: "white",
+    lightIntensity: {
+      value: 0.5, 
+      min: 0,
+      max: 5,
+      step: 0.1,
+    },
+  });
+  useHelper(directionalLightRef, DirectionalLightHelper, 0.5, "white")
+
   return (
-    <Canvas>
-    <directionalLight position={[0, 0, 2]} /> {/*[x, y, zed axis points]*/}  
+   <> 
+    <directionalLight 
+     position={[0, 1, 2]} 
+     intensity={lightIntensity} 
+     ref={directionalLightRef} 
+     color={lightColor}
+    />
+    <ambientLight intensity={0.5} /> 
+    {/*[x, y, zed axis points]*/}  
     
     {/*<group position={[0, -1, 0]}>
       <Cube position={[1, 0, 0]} color={"green"} size={[1, 1, 1]} />
@@ -95,9 +130,22 @@ function App() {
   </group>*/}
 
       {/*<Cube position={[0, 0, 0,]} size={[1, 1, 1]} color={"red"} />*/}
-      <Sphere position={[0, 0, 0]} size={[1, 30, 30]} color={""} />
+{/*<Sphere position={[0, 0, 0]} size={[1, 30, 30]} color={""} />*/}
       {/*<Torus position={[2, 0, 0]} size={[0.8, 0.1, 30, 30]} color={"blue"} />*/}
-      {/*<TorusKnot position={[-2, 0, 0]} size={[0.5, 0.1, 1000, 50 ]} color={"hotpink"} />*/} 
+      <TorusKnot 
+       position={[-0, 0, 0]} 
+       size={[ 0.1, 1000, 50 ]} 
+       color={"white"} 
+      />
+      <OrbitControls enableZoom={false} />
+      </>
+  )
+}
+
+function App() {
+  return (
+    <Canvas>
+      <Scene />
     </Canvas>
   );
 }
